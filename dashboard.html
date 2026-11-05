@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>5G Network Dashboard</title>
+<style>
+  body { background:#111217; color:#d8d9da; font-family:Arial; margin:30px; }
+  h1 { font-size:24px; }
+  .cards { display:flex; gap:16px; }
+  .card { background:#181b1f; border-radius:8px; padding:20px; width:200px;
+          border-top:6px solid #73bf69; }
+  .card.down { border-top-color:#f2495c; }
+  .name { font-size:28px; font-weight:bold; }
+  .role { font-size:12px; color:#8e8e8e; height:30px; }
+  .status { font-size:20px; margin:12px 0; color:#73bf69; }
+  .down .status { color:#f2495c; }
+  button { background:#f2495c; color:white; border:none; padding:6px 14px;
+           border-radius:4px; cursor:pointer; }
+  #log { background:#181b1f; border-radius:8px; padding:16px; margin-top:24px;
+         font-family:monospace; height:180px; overflow:auto; }
+</style>
+</head>
+<body>
+<h1>📡 5G Network Dashboard</h1>
+<div class="cards" id="cards"></div>
+<div id="log"></div>
+
+<script>
+async function refresh() {
+  const network = await (await fetch("/network")).json();
+  let html = "";
+  for (const name in network) {
+    const nf = network[name];
+    html += `<div class="card ${nf.status}">
+      <div class="name">${name}</div>
+      <div class="role">${nf.role}</div>
+      <div class="status">● ${nf.status.toUpperCase()}</div>
+      <button onclick="fail('${name}')">Simulate failure</button>
+    </div>`;
+  }
+  document.getElementById("cards").innerHTML = html;
+
+  const events = await (await fetch("/events")).json();
+  document.getElementById("log").innerHTML = events.reverse().join("<br>");
+}
+
+async function fail(name) {
+  await fetch(`/network/${name}/fail`, { method: "POST" });
+  refresh();
+}
+
+refresh();
+setInterval(refresh, 1000);   // update every second
+</script>
+</body>
+</html>
